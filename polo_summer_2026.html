@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ladies of Santa Clara – Summer Polo 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Inter', sans-serif; background: #f5f2eb; color: #1a1814; min-height: 100vh; }
+
+.header { background: #4a2e1a; color: #fff; padding: 36px 40px 32px; position: relative; overflow: hidden; }
+.header::before { content: ''; position: absolute; inset: 0; background: repeating-linear-gradient(45deg,transparent,transparent 40px,rgba(255,255,255,0.018) 40px,rgba(255,255,255,0.018) 80px); }
+.header-inner { position: relative; }
+.header h1 { font-family: 'Playfair Display', serif; font-size: 32px; font-weight: 600; letter-spacing: -0.5px; line-height: 1.1; }
+.header-subtitle { font-size: 13px; color: #c9a882; margin-top: 6px; letter-spacing: 0.08em; text-transform: uppercase; }
+.header-dates { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 16px; }
+.header-date-pill { font-size: 11px; padding: 4px 10px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.12); color: rgba(255,255,255,0.6); letter-spacing: 0.04em; }
+
+.tabs { display: flex; background: #fff; border-bottom: 1px solid #e6e0d4; padding: 0 40px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+.tab { padding: 15px 22px; font-size: 13px; font-weight: 500; cursor: pointer; color: #999; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.15s; letter-spacing: 0.02em; }
+.tab.active { color: #1a1814; border-bottom-color: #b8975a; }
+.tab:hover:not(.active) { color: #555; }
+
+.content { padding: 32px 40px; max-width: 1000px; }
+.view { display: none; }
+.view.active { display: block; }
+
+/* CALENDAR */
+.month-nav { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; }
+.month-nav h2 { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 500; min-width: 180px; color: #1a1814; }
+.nav-btn { background: #fff; border: 1px solid #ddd8cc; border-radius: 8px; width: 34px; height: 34px; cursor: pointer; font-size: 15px; display: flex; align-items: center; justify-content: center; transition: all 0.1s; color: #555; }
+.nav-btn:hover { background: #f0ebe0; border-color: #c8be9e; }
+
+.cal-wrap { background: #fff; border-radius: 16px; border: 1px solid #e6e0d4; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,0.05); }
+.cal-days-header { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); background: #faf8f3; border-bottom: 1px solid #e6e0d4; }
+.cal-day-name { text-align: center; padding: 11px 0; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: #a09070; }
+.cal-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); }
+.cal-cell { border-right: 1px solid #f0ebe0; border-bottom: 1px solid #f0ebe0; padding: 8px; min-height: 96px; overflow: hidden; cursor: pointer; transition: background 0.1s; position: relative; }
+.cal-cell:nth-child(7n) { border-right: none; }
+.cal-cell:hover:not(.faded) { background: #fdf9f2; }
+.cal-cell.faded { background: #fdfcf9; cursor: default; }
+.cal-cell.faded .day-num { color: #d0c8b8; }
+.day-num { font-size: 12px; color: #b0a888; font-weight: 500; margin-bottom: 5px; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; border-radius: 50%; }
+.cal-cell.is-today .day-num { background: #b8975a; color: #fff; font-weight: 600; }
+.cal-cell.has-events .day-num { color: #1a1814; font-weight: 600; }
+.add-hint { position: absolute; bottom: 5px; right: 7px; font-size: 16px; color: #d4c8a0; opacity: 0; transition: opacity 0.15s; line-height: 1; }
+.cal-cell:hover:not(.faded) .add-hint { opacity: 1; }
+
+.chip { font-size: 10px; padding: 2px 6px; border-radius: 4px; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; line-height: 1.5; font-weight: 500; pointer-events: none; }
+.chip-polo    { background: #dbeafe; color: #1e40af; }
+.chip-social  { background: #dcfce7; color: #166534; }
+.chip-sport   { background: #fef9c3; color: #854d0e; }
+.chip-travel  { background: #ede9fe; color: #5b21b6; }
+.chip-pending { background: #f3f0e8; color: #6b6040; }
+.chip-event   { background: #fce7f3; color: #9d174d; }
+.chip-note    { background: #fef3e2; color: #92600a; }
+.chip-more { font-size: 10px; color: #a09070; padding: 1px 4px; display: block; pointer-events: none; }
+
+.legend { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 16px; padding: 14px 18px; background: #fff; border-radius: 10px; border: 1px solid #e6e0d4; align-items: center; }
+.leg-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #777; }
+.leg-dot { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+.leg-hint { font-size: 11px; color: #b0a070; margin-left: auto; }
+
+/* MODAL */
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(20,18,12,0.5); z-index: 200; align-items: center; justify-content: center; padding: 20px; }
+.modal-overlay.open { display: flex; }
+.modal { background: #fff; border-radius: 18px; width: 100%; max-width: 460px; box-shadow: 0 24px 64px rgba(0,0,0,0.22); overflow: hidden; animation: modalIn 0.18s ease; }
+@keyframes modalIn { from { transform: translateY(12px); opacity: 0; } to { transform: none; opacity: 1; } }
+.modal-header { background: #faf8f3; padding: 18px 22px 14px; border-bottom: 1px solid #e6e0d4; display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.modal-date-str { font-family: 'Playfair Display', serif; font-size: 19px; font-weight: 500; color: #1a1814; }
+.modal-close { background: none; border: none; font-size: 22px; color: #a09070; cursor: pointer; line-height: 1; padding: 0 4px; }
+.modal-close:hover { color: #1a1814; }
+.modal-body { padding: 16px 22px 22px; max-height: 72vh; overflow-y: auto; }
+.modal-events-title { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: #b0a070; margin-bottom: 8px; }
+.modal-event-row { display: flex; align-items: flex-start; gap: 10px; padding: 9px 0; border-bottom: 1px solid #f0ebe0; }
+.modal-event-row:last-child { border-bottom: none; }
+.evt-dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 5px; flex-shrink: 0; }
+.evt-info { flex: 1; }
+.evt-label { font-size: 13px; font-weight: 500; color: #1a1814; }
+.evt-type { font-size: 11px; color: #a09070; text-transform: capitalize; margin-top: 1px; }
+.evt-people { display: flex; gap: 3px; margin-top: 5px; flex-wrap: wrap; }
+.av-tiny { width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 8px; font-weight: 600; }
+.modal-del-btn { background: none; border: none; font-size: 16px; color: #c8b890; cursor: pointer; padding: 2px 4px; }
+.modal-del-btn:hover { color: #c0392b; }
+.modal-empty { font-size: 13px; color: #b0a888; padding: 6px 0 14px; }
+.modal-divider { border: none; border-top: 1px solid #e6e0d4; margin: 16px 0 14px; }
+.modal-add-title { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: #b0a070; margin-bottom: 10px; }
+.modal-textarea { width: 100%; border: 1px solid #ddd8cc; border-radius: 10px; padding: 9px 12px; font-size: 13px; font-family: 'Inter', sans-serif; color: #1a1814; background: #fdfcf9; outline: none; resize: none; transition: border 0.15s; }
+.modal-textarea:focus { border-color: #b8975a; }
+.modal-controls { display: flex; gap: 8px; margin-top: 8px; }
+.modal-type-select { flex: 1; border: 1px solid #ddd8cc; border-radius: 10px; padding: 8px 10px; font-size: 12px; font-family: 'Inter', sans-serif; color: #4a4538; background: #fdfcf9; outline: none; }
+.modal-type-select:focus { border-color: #b8975a; }
+.modal-add-btn { background: #4a2e1a; color: #fff; border: none; border-radius: 10px; padding: 8px 20px; font-size: 13px; font-weight: 500; cursor: pointer; font-family: 'Inter', sans-serif; transition: background 0.15s; white-space: nowrap; }
+.modal-add-btn:hover { background: #6b4428; }
+
+/* People picker */
+.people-picker-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.09em; color: #b0a070; margin: 10px 0 7px; }
+.people-picker { display: flex; gap: 6px; flex-wrap: wrap; }
+.person-toggle { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 600; cursor: pointer; border: 2px solid transparent; transition: all 0.15s; opacity: 0.4; }
+.person-toggle.selected { border-color: #b8975a; opacity: 1; box-shadow: 0 0 0 2px rgba(184,151,90,0.25); }
+
+/* DETAILS */
+.det-section { margin-bottom: 40px; }
+.det-section-title { font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 500; color: #1a1814; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 2px solid #e6e0d4; display: flex; align-items: center; gap: 10px; }
+.det-section-title .range { font-family: 'Inter', sans-serif; font-size: 12px; color: #a09070; font-weight: 400; margin-left: 4px; letter-spacing: 0.04em; }
+.det-card { background: #fff; border: 1px solid #e6e0d4; border-radius: 14px; padding: 20px 24px; margin-bottom: 12px; border-left: 3px solid #b8975a; box-shadow: 0 1px 6px rgba(0,0,0,0.04); }
+.det-card h3 { font-size: 14px; font-weight: 600; margin-bottom: 12px; color: #1a1814; }
+.det-card p { font-size: 13px; color: #4a4538; line-height: 1.75; margin-bottom: 8px; }
+.det-card p:last-child { margin-bottom: 0; }
+.det-card ul { padding-left: 18px; font-size: 13px; color: #4a4538; line-height: 2; }
+.det-card a { color: #7a6030; text-decoration: none; border-bottom: 1px solid #d4b878; }
+.det-card a:hover { color: #b8975a; }
+.det-card .label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: #b0a070; margin-bottom: 4px; margin-top: 14px; }
+.det-card .label:first-child { margin-top: 0; }
+.tournament-row { display: flex; justify-content: space-between; align-items: baseline; padding: 9px 0; border-bottom: 1px solid #f0ebe0; font-size: 13px; gap: 12px; }
+.tournament-row:last-child { border-bottom: none; }
+.tournament-name { font-weight: 500; color: #1a1814; flex: 1; }
+.tournament-name.highlight { color: #7a6030; }
+.tournament-meta { color: #888; font-size: 12px; text-align: right; white-space: nowrap; }
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.cost-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 10px; }
+.cost-table th { background: #faf8f3; text-align: left; padding: 7px 10px; font-weight: 600; color: #7a6a50; border-bottom: 1px solid #e6e0d4; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; }
+.cost-table td { padding: 7px 10px; border-bottom: 1px solid #f0ebe0; color: #3a3428; }
+.cost-table tr:last-child td { border-bottom: none; background: #faf8f3; font-weight: 600; }
+
+/* ADD NOTE CARD */
+.add-note-card { background: #fff; border: 1.5px dashed #d4c9a8; border-radius: 14px; padding: 20px 24px; margin-bottom: 12px; }
+.add-note-card-title { font-size: 13px; font-weight: 600; color: #a09070; margin-bottom: 14px; }
+.saved-notes-list { margin-bottom: 12px; }
+.saved-note-row { display: flex; gap: 10px; align-items: flex-start; padding: 10px 0; border-bottom: 1px solid #f0ebe0; }
+.saved-note-row:last-child { border-bottom: none; }
+.saved-note-body { flex: 1; }
+.saved-note-title { font-size: 13px; font-weight: 600; color: #1a1814; margin-bottom: 2px; }
+.saved-note-text { font-size: 13px; color: #4a4538; line-height: 1.6; }
+.saved-note-del { background: none; border: none; color: #c8b890; cursor: pointer; font-size: 16px; padding: 2px 4px; flex-shrink: 0; }
+.saved-note-del:hover { color: #c0392b; }
+.note-form { display: flex; flex-direction: column; gap: 8px; }
+.note-title-inp { border: 1px solid #ddd8cc; border-radius: 9px; padding: 8px 12px; font-size: 13px; font-family: 'Inter', sans-serif; color: #1a1814; background: #fdfcf9; outline: none; transition: border 0.15s; }
+.note-title-inp:focus { border-color: #b8975a; }
+.note-text-inp { border: 1px solid #ddd8cc; border-radius: 9px; padding: 9px 12px; font-size: 13px; font-family: 'Inter', sans-serif; color: #1a1814; background: #fdfcf9; outline: none; resize: vertical; min-height: 72px; transition: border 0.15s; }
+.note-text-inp:focus { border-color: #b8975a; }
+.note-save-btn { align-self: flex-end; background: #4a2e1a; color: #fff; border: none; border-radius: 9px; padding: 8px 20px; font-size: 13px; font-weight: 500; cursor: pointer; font-family: 'Inter', sans-serif; transition: background 0.15s; }
+.note-save-btn:hover { background: #6b4428; }
+
+a { color: #7a6030; text-decoration: none; }
+a:hover { color: #b8975a; }
+
+@media (max-width: 640px) {
+  .content { padding: 20px 16px; }
+  .header { padding: 28px 20px 24px; }
+  .tabs { padding: 0 16px; }
+  .cal-cell { min-height: 68px; padding: 5px; }
+  .chip { font-size: 9px; }
+  .month-nav h2 { font-size: 18px; min-width: 140px; }
+  .two-col { grid-template-columns: 1fr; }
+  .leg-hint { display: none; }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-inner">
+    <h1>Ladies of Santa Clara</h1>
+    <div class="header-subtitle">Summer Polo 2026 &nbsp;·&nbsp; Paris &nbsp;·&nbsp; United Kingdom &nbsp;·&nbsp; Saint Tropez</div>
+    <div class="header-dates">
+      <div class="header-date-pill">🇫🇷 Paris — May 26–31</div>
+      <div class="header-date-pill">🇬🇧 UK — June</div>
+      <div class="header-date-pill">🌊 Saint Tropez — July</div>
+    </div>
+  </div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('calendar',this)">Calendar</div>
+  <div class="tab" onclick="switchTab('details',this)">Details</div>
+</div>
+
+<div class="content">
+  <div id="calendar" class="view active">
+    <div class="month-nav">
+      <button class="nav-btn" onclick="prevMonth()">&#8592;</button>
+      <h2 id="month-label"></h2>
+      <button class="nav-btn" onclick="nextMonth()">&#8594;</button>
+    </div>
+    <div class="cal-wrap">
+      <div class="cal-days-header" id="day-names"></div>
+      <div class="cal-grid" id="cal-grid"></div>
+    </div>
+    <div class="legend">
+      <div class="leg-item"><div class="leg-dot" style="background:#dbeafe"></div>Polo</div>
+      <div class="leg-item"><div class="leg-dot" style="background:#dcfce7"></div>Social</div>
+      <div class="leg-item"><div class="leg-dot" style="background:#fce7f3"></div>Event</div>
+      <div class="leg-item"><div class="leg-dot" style="background:#fef9c3"></div>Sport</div>
+      <div class="leg-item"><div class="leg-dot" style="background:#ede9fe"></div>Travel</div>
+      <div class="leg-item"><div class="leg-dot" style="background:#f3f0e8"></div>Pending</div>
+      <div class="leg-item"><div class="leg-dot" style="background:#fef3e2"></div>Note</div>
+      <div class="leg-hint">Click any day to view details or add</div>
+    </div>
+  </div>
+  <div id="details" class="view"></div>
+</div>
+
+<!-- DAY MODAL -->
+<div class="modal-overlay" id="modal-overlay" onclick="closeModalOutside(event)">
+  <div class="modal" id="modal-box">
+    <div class="modal-header">
+      <div class="modal-date-str" id="modal-date-label"></div>
+      <button class="modal-close" onclick="closeModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div id="modal-events-wrap"></div>
+      <hr class="modal-divider">
+      <div class="modal-add-title">Add to this day</div>
+      <textarea class="modal-textarea" id="modal-input-text" rows="2" placeholder="Note or event name…"></textarea>
+      <div class="modal-controls">
+        <select class="modal-type-select" id="modal-input-type">
+          <option value="note">📝 Note</option>
+          <option value="polo">🐴 Polo</option>
+          <option value="social">🥂 Social</option>
+          <option value="event">🎉 Event</option>
+          <option value="travel">✈️ Travel</option>
+          <option value="sport">🎾 Sport</option>
+        </select>
+        <button class="modal-add-btn" onclick="saveCalNote()">Add</button>
+      </div>
+      <div class="people-picker-label">Who's joining?</div>
+      <div class="people-picker" id="people-picker"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const CHIP = { polo:'chip-polo', social:'chip-social', sport:'chip-sport', travel:'chip-travel', pending:'chip-pending', event:'chip-event', note:'chip-note' };
+const DOTC = { polo:'#1e40af', social:'#166534', sport:'#854d0e', travel:'#5b21b6', pending:'#6b6040', event:'#9d174d', note:'#92600a' };
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+const PEOPLE = {
+  Andie:    {i:'An',bg:'#bfdbfe',fg:'#1e40af'},
+  Luis:     {i:'Lu',bg:'#ddd6fe',fg:'#5b21b6'},
+  Sarah:    {i:'Sa',bg:'#bbf7d0',fg:'#166534'},
+  Frenchie: {i:'Fr',bg:'#e5e7eb',fg:'#374151'},
+  Madison:  {i:'Ma',bg:'#fde68a',fg:'#92400e'},
+  Nat:      {i:'Na',bg:'#99f6e4',fg:'#134e4a'},
+  James:    {i:'Ja',bg:'#fed7aa',fg:'#9a3412'},
+  Aspen:    {i:'As',bg:'#d9f99d',fg:'#365314'},
+  Kris:     {i:'Kr',bg:'#fecdd3',fg:'#9f1239'},
+};
+
+const EVENTS = [
+  {date:'2026-05-26',label:'Stick & Ball',type:'polo',people:['Luis','Frenchie','Nat','Madison','James','Andie']},
+  {date:'2026-05-27',label:'Stick & Ball',type:'polo',people:['Luis','Madison','Nat','Frenchie','James','Andie']},
+  {date:'2026-05-27',label:'Riding Club Safari Dinner',type:'social',people:['Andie','Luis','Sarah']},
+  {date:'2026-05-28',label:'Stick & Ball',type:'polo',people:['Luis','Madison','Nat','Frenchie','James','Andie']},
+  {date:'2026-05-28',label:'Suzanne Rea Brand Dinner',type:'social',people:[]},
+  {date:'2026-05-29',label:"Sarah Lou's Show",type:'event',people:['Luis','Madison','Nat','Frenchie','James','Andie','Sarah']},
+  {date:'2026-05-30',label:"Le Relais de l'Entrecôte",type:'social',people:[]},
+  {date:'2026-05-31',label:'Bad Bunny',type:'social',people:['Andie','Sarah']},
+  {date:'2026-06-01',label:'Andrina arrives UK',type:'travel',people:['Andie']},
+  {date:'2026-06-05',label:'Polo in the Park',type:'polo',people:['Madison','Andie']},
+  {date:'2026-06-08',label:'Frenchie arrives UK',type:'travel',people:['Frenchie']},
+  {date:'2026-06-10',label:'Tuthill Cup — Day 1',type:'pending',people:['Andie','Luis','Frenchie','Aspen']},
+  {date:'2026-06-11',label:'Tuthill Cup — Day 2',type:'pending',people:['Andie','Luis','Frenchie','Aspen']},
+  {date:'2026-06-12',label:'Tuthill Cup — Day 3',type:'pending',people:['Andie','Luis','Frenchie','Aspen']},
+  {date:'2026-06-13',label:'Tuthill Cup — Day 4',type:'pending',people:['Andie','Luis','Frenchie','Aspen']},
+  {date:'2026-06-14',label:"Queen's Cup Final",type:'polo',people:['Andie','Sarah','Frenchie']},
+  {date:'2026-06-17',label:'Wedding — Day 1',type:'event',people:['Andie','Luis','Sarah']},
+  {date:'2026-06-18',label:'Wedding — Day 2',type:'event',people:['Andie','Sarah','Luis']},
+  {date:'2026-06-19',label:'Wedding — Day 3',type:'event',people:['Andie','Sarah','Luis']},
+  {date:'2026-06-20',label:'Wedding — Day 4',type:'event',people:['Andie','Sarah','Luis']},
+  {date:'2026-06-23',label:'Kris Calder arrives',type:'travel',people:['Kris']},
+  {date:'2026-07-01',label:'Wimbledon',type:'sport',people:[]},
+  {date:'2026-07-10',label:'Saint Tropez Polo Season',type:'polo',people:[]},
+];
+
+let curYear=2026, curMonth=4, modalDate=null;
+
+function getCalNotes(){try{return JSON.parse(localStorage.getItem('calNotes')||'{}')}catch(e){return{}}}
+function setCalNotes(d){try{localStorage.setItem('calNotes',JSON.stringify(d))}catch(e){}}
+function getSecNotes(){try{return JSON.parse(localStorage.getItem('secNotes')||'{}')}catch(e){return{}}}
+function setSecNotes(d){try{localStorage.setItem('secNotes',JSON.stringify(d))}catch(e){}}
+
+function allEventsOn(ds){
+  const base=EVENTS.filter(e=>e.date===ds);
+  const user=(getCalNotes()[ds]||[]).map(n=>({label:n.text,type:n.type,people:[],_uid:n.id}));
+  return [...base,...user];
+}
+
+function renderCalendar(){
+  document.getElementById('month-label').textContent=`${MONTHS[curMonth]} ${curYear}`;
+  document.getElementById('day-names').innerHTML=DAYS.map(d=>`<div class="cal-day-name">${d}</div>`).join('');
+  const grid=document.getElementById('cal-grid');
+  const first=new Date(curYear,curMonth,1).getDay();
+  const dim=new Date(curYear,curMonth+1,0).getDate();
+  const prev=new Date(curYear,curMonth,0).getDate();
+  const today=new Date();
+  let html='';
+  for(let i=0;i<first;i++) html+=`<div class="cal-cell faded"><div class="day-num">${prev-first+1+i}</div></div>`;
+  for(let d=1;d<=dim;d++){
+    const ds=`${curYear}-${String(curMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const evts=allEventsOn(ds);
+    const isToday=today.getFullYear()===curYear&&today.getMonth()===curMonth&&today.getDate()===d;
+    let chips='';
+    evts.slice(0,2).forEach(e=>{ chips+=`<span class="chip ${CHIP[e.type]||'chip-social'}">${e.label}</span>`; });
+    if(evts.length>2) chips+=`<span class="chip-more">+${evts.length-2} more</span>`;
+    html+=`<div class="cal-cell${isToday?' is-today':''}${evts.length?' has-events':''}" onclick="openModal('${ds}')">
+      <div class="day-num">${d}</div>${chips}<span class="add-hint">+</span></div>`;
+  }
+  const rem=(7-(first+dim)%7)%7;
+  for(let i=1;i<=rem;i++) html+=`<div class="cal-cell faded"><div class="day-num">${i}</div></div>`;
+  grid.innerHTML=html;
+}
+
+function prevMonth(){if(curMonth===0){curMonth=11;curYear--;}else curMonth--;renderCalendar();}
+function nextMonth(){if(curMonth===11){curMonth=0;curYear++;}else curMonth++;renderCalendar();}
+
+// ─── Modal ────────────────────────────────────────────────────────
+let selectedPeople = new Set();
+
+function renderPeoplePicker() {
+  const html = Object.entries(PEOPLE).map(([name, p]) =>
+    `<div class="person-toggle${selectedPeople.has(name)?' selected':''}"
+      style="background:${p.bg};color:${p.fg}"
+      title="${name}"
+      onclick="togglePerson('${name}')">${p.i}</div>`
+  ).join('');
+  document.getElementById('people-picker').innerHTML = html;
+}
+
+function togglePerson(name) {
+  if (selectedPeople.has(name)) selectedPeople.delete(name);
+  else selectedPeople.add(name);
+  renderPeoplePicker();
+}
+
+function openModal(ds){
+  modalDate=ds;
+  selectedPeople = new Set();
+  const d=new Date(ds+'T12:00:00');
+  document.getElementById('modal-date-label').textContent=d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+  document.getElementById('modal-input-text').value='';
+  document.getElementById('modal-input-type').value='note';
+  renderModalEvents();
+  renderPeoplePicker();
+  document.getElementById('modal-overlay').classList.add('open');
+}
+function closeModal(){document.getElementById('modal-overlay').classList.remove('open');}
+function closeModalOutside(e){if(e.target.id==='modal-overlay')closeModal();}
+
+function renderModalEvents(){
+  const base=EVENTS.filter(e=>e.date===modalDate);
+  const user=getCalNotes()[modalDate]||[];
+  let html='';
+  if(base.length){
+    html+=`<div class="modal-events-title">Scheduled</div>`;
+    base.forEach(e=>{
+      const ppl=e.people.slice(0,8).map(n=>{const p=PEOPLE[n];return p?`<div class="av-tiny" style="background:${p.bg};color:${p.fg}" title="${n}">${p.i}</div>`:''}).join('');
+      html+=`<div class="modal-event-row"><div class="evt-dot" style="background:${DOTC[e.type]||'#888'}"></div>
+        <div class="evt-info"><div class="evt-label">${e.label}</div><div class="evt-type">${e.type}</div>
+        ${e.people.length?`<div class="evt-people">${ppl}</div>`:''}</div></div>`;
+    });
+  }
+  if(user.length){
+    html+=`<div class="modal-events-title" style="margin-top:${base.length?12:0}px">Added</div>`;
+    user.forEach(n=>{
+      const ppl=(n.people||[]).map(name=>{const p=PEOPLE[name];return p?`<div class="av-tiny" style="background:${p.bg};color:${p.fg}" title="${name}">${p.i}</div>`:''}).join('');
+      html+=`<div class="modal-event-row"><div class="evt-dot" style="background:${DOTC[n.type]||DOTC.note}"></div>
+        <div class="evt-info"><div class="evt-label">${n.text}</div><div class="evt-type">${n.type}</div>
+        ${ppl?`<div class="evt-people">${ppl}</div>`:''}</div>
+        <button class="modal-del-btn" onclick="deleteCalNote('${n.id}')">×</button></div>`;
+    });
+  }
+  if(!base.length&&!user.length) html=`<div class="modal-empty">No events yet — add one below.</div>`;
+  document.getElementById('modal-events-wrap').innerHTML=html;
+}
+
+function saveCalNote(){
+  const text=document.getElementById('modal-input-text').value.trim();
+  if(!text)return;
+  const type=document.getElementById('modal-input-type').value;
+  const people=[...selectedPeople];
+  const notes=getCalNotes();
+  if(!notes[modalDate])notes[modalDate]=[];
+  notes[modalDate].push({id:Date.now().toString(),text,type,people});
+  setCalNotes(notes);
+  document.getElementById('modal-input-text').value='';
+  selectedPeople=new Set();
+  renderPeoplePicker();
+  renderModalEvents();
+  renderCalendar();
+}
+
+function deleteCalNote(id){
+  const notes=getCalNotes();
+  if(notes[modalDate])notes[modalDate]=notes[modalDate].filter(n=>n.id!==id);
+  if(notes[modalDate]&&!notes[modalDate].length)delete notes[modalDate];
+  setCalNotes(notes);
+  renderModalEvents();
+  renderCalendar();
+}
+
+// ─── Details ──────────────────────────────────────────────────────
+function noteCardHtml(section){
+  const saved=(getSecNotes()[section]||[]);
+  let savedHtml='';
+  if(saved.length){
+    savedHtml='<div class="saved-notes-list">'+saved.map(n=>`
+      <div class="saved-note-row">
+        <div class="saved-note-body">
+          ${n.title?`<div class="saved-note-title">${n.title}</div>`:''}
+          <div class="saved-note-text">${n.text}</div>
+        </div>
+        <button class="saved-note-del" onclick="deleteSecNote('${section}','${n.id}')">×</button>
+      </div>`).join('')+'</div>';
+  }
+  return `<div class="add-note-card">
+    <div class="add-note-card-title">✏️ Group notes</div>
+    ${savedHtml}
+    <div class="note-form">
+      <input class="note-title-inp" id="nt-${section}" placeholder="Title (optional)">
+      <textarea class="note-text-inp" id="nn-${section}" placeholder="Add a note, recommendation, link, or anything useful for the group…"></textarea>
+      <button class="note-save-btn" onclick="saveSecNote('${section}')">Save note</button>
+    </div>
+  </div>`;
+}
+
+function saveSecNote(sec){
+  const title=document.getElementById(`nt-${sec}`).value.trim();
+  const text=document.getElementById(`nn-${sec}`).value.trim();
+  if(!text)return;
+  const all=getSecNotes();
+  if(!all[sec])all[sec]=[];
+  all[sec].push({id:Date.now().toString(),title,text});
+  setSecNotes(all);
+  renderDetails();
+}
+
+function deleteSecNote(sec,id){
+  const all=getSecNotes();
+  if(all[sec])all[sec]=all[sec].filter(n=>n.id!==id);
+  setSecNotes(all);
+  renderDetails();
+}
+
+function renderDetails(){
+  document.getElementById('details').innerHTML=`
+
+  <div class="det-section">
+    <div class="det-section-title">🇫🇷 Paris <span class="range">May 26–31</span></div>
+    <div class="two-col">
+      <div class="det-card">
+        <h3>🏠 Lodging</h3>
+        <div class="label">Frenchie &amp; Andrina</div>
+        <p><a href="https://www.hotel-marais-home.fr/en/classic-room.html">Hotel Marais Home</a></p>
+      </div>
+      <div class="det-card">
+        <h3>🎨 Sarah Lou's Show</h3>
+        <div class="label">Address · May 29</div>
+        <p>62 Rue Charlot, 75003 Paris</p>
+      </div>
+    </div>
+    <div class="det-card">
+      <h3>🐴 Polo Details</h3>
+      <div class="label">Venue</div>
+      <p>Most likely Chantilly — Luis is trying for Bagatelle (center of Paris).</p>
+      <p><strong>New idea:</strong> club-hop — stick &amp; ball at all clubs.</p>
+    </div>
+    <div class="det-card">
+      <h3>📍 Places of Interest</h3>
+      <div class="label">Food &amp; Market</div>
+      <ul>
+        <li><a href="https://maps.app.goo.gl/ji2xJRB52msKWp2x6">Cafe Charlot</a></li>
+        <li><a href="https://maps.app.goo.gl/pcVfsmEysY7egULH9">Local Market</a></li>
+      </ul>
+      <div class="label" style="margin-top:12px">Dinner — May 30</div>
+      <p><a href="https://share.google/rzKjUriQJN1djXXz7">Le Relais de l'Entrecôte</a></p>
+    </div>
+    ${noteCardHtml('paris')}
+  </div>
+
+  <div class="det-section">
+    <div class="det-section-title">🇬🇧 United Kingdom <span class="range">June</span></div>
+    <div class="det-card">
+      <h3>🏠 Lodging</h3>
+      <p>Andrina + Sarah — Downtown Woodstock, June</p>
+      <div class="label" style="margin-top:10px">Airbnb</div>
+      <p><a href="https://www.airbnb.ca/rooms/48086795?source_impression_id=p3_1778533933_P3dEgfKY-4G6MDhj">View Airbnb listing</a></p>
+    </div>
+    <div class="det-card">
+      <h3>🏇 Polo in the Park — Jun 5</h3>
+      <p><a href="https://www.polointheparklondon.com/">polointheparklondon.com</a></p>
+    </div>
+    <div class="det-card">
+      <h3>🏆 Tournaments at Kirtlington</h3>
+      <p style="font-size:12px;color:#888;margin-bottom:12px">⭐ = target tournament. * = HPA Rules.</p>
+      <div class="tournament-row"><div class="tournament-name">Brook House 6 Goal</div><div class="tournament-meta">Jun 2–7 · Entry £1,145 · Ump £150/game · 2–3 games</div></div>
+      <div class="tournament-row"><div class="tournament-name">Omi Garner 2 Goal</div><div class="tournament-meta">Jun 2–7 · Entry £730 · Ump £75/game · 2–3 games</div></div>
+      <div class="tournament-row"><div class="tournament-name highlight">⭐ Tuthill Cup VL HPA 4 Goal *</div><div class="tournament-meta">Jun 10–14 · Entry £1,005 · Ump £150/game · 2–3 games</div></div>
+      <div class="tournament-row"><div class="tournament-name">Continental Cup 0 Goal</div><div class="tournament-meta">Jun 13–14 · Entry £600 · Ump £25/game · 2 games</div></div>
+      <div class="tournament-row"><div class="tournament-name">Hunter Jones 6 Goal</div><div class="tournament-meta">Jun 16–21 · Entry £1,145 · Ump £150/game · 2–3 games</div></div>
+      <div class="tournament-row"><div class="tournament-name">NFU Cup 2 Goal</div><div class="tournament-meta">Jun 17–21 · Entry £730 · Ump £75/game · 2–3 games</div></div>
+      <div class="tournament-row"><div class="tournament-name">McKenzie Hill 2 Goal</div><div class="tournament-meta">Jun 24–28 · Entry £835 · Ump £150/game · 2–3 games</div></div>
+      <div class="tournament-row"><div class="tournament-name">DHE Cup 0 Goal</div><div class="tournament-meta">Jun 27–28 · Entry £600 · Ump £25/game · 2 games</div></div>
+    </div>
+    <div class="det-card">
+      <h3>⭐ Tuthill Cup 4 Goal — Cost Estimate</h3>
+      <p style="font-size:12px;color:#888;margin-bottom:10px">Rough estimate for max 3 games. Luis plays at £0 cost.</p>
+      <table class="cost-table">
+        <thead><tr><th>Expense</th><th>Per player</th></tr></thead>
+        <tbody>
+          <tr><td>Luis pro fee (÷3)</td><td>TBD</td></tr>
+          <tr><td>Luis horse fee (÷3)</td><td>£1,200 <span style="color:#999;font-size:11px">3 games @ £300/horse</span></td></tr>
+          <tr><td>Player horses</td><td>£2,400</td></tr>
+          <tr><td>Horse transport</td><td>£2,700 <span style="color:#999;font-size:11px">£900+vat/lorry/trip</span></td></tr>
+          <tr><td>Umpire pony rental</td><td>£150 <span style="color:#999;font-size:11px">£150+vat/game</span></td></tr>
+          <tr><td>Entry fee (÷3)</td><td>£335</td></tr>
+          <tr><td><strong>Total per player</strong></td><td><strong>£6,785</strong></td></tr>
+        </tbody>
+      </table>
+      <div class="label" style="margin-top:14px">Horse hire rate</div><p>£200 + VAT per chukka</p>
+      <div class="label">Transport</div><p>£900 + VAT per trip per lorry</p>
+      <div class="label">Umpire pony rental</div><p>£150 + VAT per game</p>
+    </div>
+    <div class="det-card">
+      <h3>🔗 Club Links</h3>
+      <ul>
+        <li><a href="https://www.instagram.com/kirtlingtonpolo">Kirtlington Polo — Instagram</a></li>
+        <li><a href="https://www.instagram.com/oxfordpolo">Oxford Polo — Instagram</a></li>
+      </ul>
+    </div>
+    ${noteCardHtml('uk')}
+  </div>
+
+  <div class="det-section">
+    <div class="det-section-title">🌊 Saint Tropez <span class="range">July</span></div>
+    <div class="det-card">
+      <h3>🏇 Polo Season</h3>
+      <ul>
+        <li><a href="https://drive.google.com/file/d/1nVsP7raV9_MU29vJNs1q37L3udIf9koC/view?usp=drive_link">Saint Tropez Polo Season Info</a></li>
+        <li><a href="https://drive.google.com/file/d/1Lvj05huLe1CB31tO_byvC0kCXJxZSRT6/view?usp=drive_link">Women's Polo Info</a></li>
+      </ul>
+    </div>
+    ${noteCardHtml('tropez')}
+  </div>`;
+}
+
+function switchTab(name,el){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById(name).classList.add('active');
+}
+
+renderCalendar();
+renderDetails();
+</script>
+</body>
+</html>
